@@ -52,36 +52,43 @@ class ArquivoController extends Controller
     public function store(Request $request)
     {
         try {
-
-            // dd($request->all());
-            
-            // Validação dos dados do formulário
+                 
             $request->validate([
                 'cliente_id' => 'required|exists:clientes,id',
                 'tipo' => 'required|in:video,foto,link',
-                'caminho_do_arquivo' => ($request->tipo == 'link') ? 'required|url' : 'required|mimes:mp4,jpg,jpeg,png',                
+                // 'caminho_do_arquivo' => ($request->tipo == 'link') ? 'required|url' : 'required|mimes:mp4,jpg,jpeg,png',                
                 'DataHoraInicio' => 'required|date_format:Y-m-d\TH:i',
                 'DataHoraFim' => 'required|date_format:Y-m-d\TH:i',
                 'Status' => 'required|in:ativo,inativo,pausado',
             ]);
-
-            // Criação do arquivo
+           
             $arquivo = New Arquivo();
             
             $arquivo->cliente_id = $request->input('cliente_id');
             $arquivo->tipo = $request->input('tipo');
 
+            if ($request->tipo == 'foto' || $request->File('caminho_do_arquivo')) {
+                
+                $foto = $request->file('caminho_do_arquivo');
+                $nomeFoto = time() . '.' . $foto->getClientOriginalExtension();
+                $foto->move(public_path('fotos'), $nomeFoto);
+                $arquivo->caminho_do_arquivo = $nomeFoto;
+                $arquivo->save(); 
+            } elseif ($request->tipo == 'video' || $request->hasFile('caminho_do_arquivo')) {
 
-            if ($request->tipo == 'video' || $request->tipo == 'foto') {
-                // Certifique-se de ajustar a lógica de armazenamento conforme necessário
-                $caminhoDoArquivo = Storage::putFileAs(
-                    '/uploads', // Substitua '/uploads' pelo diretório desejado dentro de storage/app/VisualScreen
-                    $request->file('caminho_do_arquivo'),
-                    'foto.' . $request->file('caminho_do_arquivo')->extension()
-                );
-                // dd($caminhoDoArquivo);
-                $arquivo->caminho_do_arquivo = $caminhoDoArquivo;
-                $arquivo->save();            
+                $video = $request->file('caminho_do_arquivo');
+                
+                // Defina um nome único para o arquivo
+                $nomeArquivo = uniqid().'.'.$video->getClientOriginalExtension();
+        
+                // Mova o arquivo para o diretório desejado
+                $video->move(public_path('videos'), $nomeArquivo);        
+             
+                $arquivo->caminho_do_arquivo = $nomeArquivo;
+                $arquivo->save(); 
+        
+                
+          
             } else {
 
                 $videoUrl = $request->input('caminho_do_arquivo');
@@ -91,7 +98,6 @@ class ArquivoController extends Controller
                 $arquivo->save();
             }
 
-            // Criação do agendamento associado ao arquivo
             Agendamento::create([
                 'arquivo_id' => $arquivo->id,
                 'Status' => $request->input('Status'),
@@ -99,18 +105,12 @@ class ArquivoController extends Controller
                 'DataHoraFim' => $request->input('DataHoraFim'),
             ]);
             $idCliente = $arquivo->cliente_id;
-
-            // Redireciona de volta para a página de arquivos ou para onde você desejar
+            
             return redirect()->route('arquivos.index', ['id' => $idCliente])->with('success', 'Arquivo cadastrado com sucesso!');
            
-        } catch (\Throwable $th) {
-            // Log do erro para referência futura
-            \Log::error($th);
-        
-            // Imprime mais detalhes da exceção
-            dd($th);
-        
-            // Redireciona de volta para a página anterior com mensagem de erro
+        } catch (\Exception $e) {            
+            info($e);            
+            dd($e , $request->all());                 
             return redirect()->back()->with('error', 'Ocorreu um erro ao cadastrar o arquivo. Por favor, tente novamente.');
         }
     }
@@ -122,7 +122,7 @@ class ArquivoController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show()
     {
         //
     }
@@ -147,10 +147,35 @@ class ArquivoController extends Controller
      */
     public function update(Request $request, $id)
     {   
+        
+        $arquivo = Arquivo::find($id);
+        if ($request->status !== $arquivo->status) {
 
-        Agendamento::where('arquivo_id', $id)->update(['Status' => $request->status,]);
+            Agendamento::where('arquivo_id', $arquivo->id)->update(['Status' => $request->status,]);
 
-        return redirect()->back();
+            return redirect()->back();
+        }
+
+        if ($request->tipo == 'foto' || $request->File('caminho_do_arquivo')) {
+                
+            $foto = $request->file('caminho_do_arquivo');
+            $nomeFoto = time() . '.' . $foto->getClientOriginalExtension();
+            $foto->move(public_path('fotos'), $nomeFoto);
+            $arquivo->caminho_do_arquivo = $nomeFoto;
+            $arquivo->save(); 
+        } elseif ($request->tipo == 'video') {
+            $caminhoDoArquivo = Storage::putFile('/public', $request->file('caminho_do_arquivo'));
+
+            $arquivo->caminho_do_arquivo = $caminhoDoArquivo;
+            $arquivo->save();            
+        } else {
+
+            $videoUrl = $request->input('caminho_do_arquivo');
+            preg_match('/(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/', $videoUrl, $matches);
+            $videoId = isset($matches[1]) ? $matches[1] : null;
+            $arquivo->caminho_do_arquivo = $videoId;
+            $arquivo->save();
+        }
     }
 
     /**

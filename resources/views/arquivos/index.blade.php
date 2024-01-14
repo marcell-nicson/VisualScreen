@@ -29,33 +29,39 @@
                                         {{-- Miniatura (substitua 'caminho_do_arquivo' pelo nome do campo que armazena o caminho do arquivo) --}}
 
                                         <div style="width: 250px; height: 150px;">
-                                            @if ($arquivo->tipo == 'foto')                                                                                                                               
-                                                <img src="{{ $arquivo->caminho_do_arquivo }}" alt="Foto">
+                                            @if ($arquivo->tipo == 'foto')                            
+                                                <img style="width: 100%; height: 100%;" src="{{ asset('fotos/' . $arquivo->caminho_do_arquivo) }}" alt="foto" > 
                                             @elseif ($arquivo->tipo == 'video')
-                                                <video src="{{ $arquivo->caminho_do_arquivo }}" controls></video>
+                                                <video controls style="width: 100%; height: 100%;">
+                                                    <source src="{{ asset('fotos/' . $arquivo->caminho_do_arquivo) }}" type="video/mp4">
+                                                </video>
                                             @elseif ($arquivo->tipo == 'link') 
                                                 <iframe width="100%" height="100%" src="https://www.youtube.com/embed/{{ $arquivo->caminho_do_arquivo }}?mute=1" frameborder="0" allowfullscreen></iframe>
                                             @endif
                                         </div>
+                                        
 
                                         <div class="mt-2">                                           
                                             <p><strong>Cliente ID:</strong> {{ $arquivo->cliente_id }}</p>
                                             <p><strong>Video ID:</strong> {{ $arquivo->id }}</p>
                                             <p><strong>Tipo:</strong> {{ $arquivo->tipo }}</p>                                       
-                                            <p><strong>Data e Hora Início:</strong> {{ $arquivo->agendamentos->DataHoraInicio }}</p>
-                                            <p><strong>Data e Hora Fim:</strong> {{ $arquivo->agendamentos->DataHoraFim }}</p>
-                                           
-                                            <form method="POST" action="{{ route('arquivos.update', ['arquivo' => $arquivo->id]) }}">
-                                                @csrf
-                                                @method('PUT')
-                                                <strong>Status:</strong>  
-                                                <select name="status" id="status" onchange="this.form.submit()">                                                
-                                                    <option value="Selecione" >{{ $arquivo->agendamentos->Status}}</option>
-                                                    <option value="inativo" {{ $arquivo->agendamentos->Status == 'inativo' ? 'selected' : '' }}>Inativo</option>
-                                                    <option value="pausado" {{ $arquivo->agendamentos->Status == 'pausado' ? 'selected' : '' }}>Pausado</option>
-                                                    <option value="ativo" {{ $arquivo->agendamentos->Status == 'ativo' ? 'selected' : '' }}>Ativo</option>
-                                                </select>
-                                            </form>     
+                                            <p><strong>Início:</strong> {{ \Carbon\Carbon::parse($arquivo->agendamentos->DataHoraInicio)->format('d/m/Y H:i:s') ?? '' }}</p>
+                                            <p><strong>Fim:</strong> {{ \Carbon\Carbon::parse($arquivo->agendamentos->DataHoraFim)->format('d/m/Y H:i:s') ?? '' }}</p>
+                                                                                    
+                                            @if(isset($arquivo->agendamentos->Status))
+                                                <form method="POST" action="{{ route('arquivos.update', ['arquivo' => $arquivo->id]) }}">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <strong>Status:</strong>  
+                                                    <select name="status" id="status" onchange="this.form.submit()">                                                
+                                                        <option value="Selecione" >{{ $arquivo->agendamentos->Status ?? ''}}</option>
+                                                        <option value="inativo" {{ $arquivo->agendamentos->Status == 'inativo' ? 'selected' : '' }}>Inativo</option>
+                                                        <option value="pausado" {{ $arquivo->agendamentos->Status == 'pausado' ? 'selected' : '' }}>Pausado</option>
+                                                        <option value="ativo" {{ $arquivo->agendamentos->Status == 'ativo' ? 'selected' : '' }}>Ativo</option>
+                                                    </select>
+                                                </form>      
+                                            @endif
+                                               
                                             <td title="Excluir Arquivo" >
                                                 <a href="#" onclick="confirmDelete({{ $arquivo->id }})">
                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="text-red-700 w-6 h-6">
