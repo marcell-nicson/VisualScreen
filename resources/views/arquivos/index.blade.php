@@ -3,23 +3,26 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">   
+                    @if(session('success'))
+                        <div class="bg-green-200 p-4 mb-4">
+                            {{ session('success') }}
+                        </div>
+                    @elseif(session('error'))
+                        <div class="bg-red-200 p-4 mb-4">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
                     <div class="flex items-center justify-center mt-2">
-                        <a href="{{ route('arquivos.create') }}" class="bg-blue-500 hover:bg-blue-500 text-blue-700 hover:text-white font-bold py-2 px-4 rounded">
+                        <a href="{{ route('arquivos.create', ['cliente' => $cliente->id]) }}" class="bg-blue-500 hover:bg-blue-500 text-blue-700 hover:text-white font-bold py-2 px-4 rounded">
                             Adicionar Arquivos
                         </a>
                     </div>                 
                     @isset($arquivos)
                         @if($arquivos->isEmpty())                        
-                            <div class="flex items-center">
+                            <div class="flex items-center mt-2">
                                 <p class="mr-2">Não existe nenhum arquivo para esse Cliente: </p>
-                                <strong class="mr-2"> {{ $nome ?? '' }}</strong>
-                        
-                                <button onclick="window.location='{{ route('arquivos.create') }}'" class="flex hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-2 border border-blue-500 rounded">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                    </svg>
-                                    <span>Adicionar</span>
-                                </button>
+                                <strong class="mr-2"> {{ $cliente->nome ?? '' }}</strong>                                
                             </div>                        
                         
                         @else
@@ -45,13 +48,14 @@
                                             <p><strong>Cliente ID:</strong> {{ $arquivo->cliente_id }}</p>
                                             <p><strong>Video ID:</strong> {{ $arquivo->id }}</p>
                                             <p><strong>Tipo:</strong> {{ $arquivo->tipo }}</p>                                       
-                                            <p><strong>Início:</strong> {{ \Carbon\Carbon::parse($arquivo->agendamentos->DataHoraInicio)->format('d/m/Y H:i:s') ?? '' }}</p>
-                                            <p><strong>Fim:</strong> {{ \Carbon\Carbon::parse($arquivo->agendamentos->DataHoraFim)->format('d/m/Y H:i:s') ?? '' }}</p>
-                                                                                    
+                                            {{-- <p><strong>Início:</strong> {{ \Carbon\Carbon::parse($arquivo->agendamentos->DataHoraInicio)->format('d/m/Y H:i:s') ?? '' }}</p>
+                                            <p><strong>Fim:</strong> {{ \Carbon\Carbon::parse($arquivo->agendamentos->DataHoraFim)->format('d/m/Y H:i:s') ?? '' }}</p> --}}
+                                          
                                             @if(isset($arquivo->agendamentos->Status))
-                                                <form method="POST" action="{{ route('arquivos.update', ['arquivo' => $arquivo->id]) }}">
+                                                <form method="POST" action="{{ route('arquivos.update', ['arquivo' => $arquivo->id]) }}" id="updateForm">
                                                     @csrf
                                                     @method('PUT')
+                                                    
                                                     <strong>Status:</strong>  
                                                     <select name="status" id="status" onchange="this.form.submit()">                                                
                                                         <option value="Selecione" >{{ $arquivo->agendamentos->Status ?? ''}}</option>
@@ -59,7 +63,13 @@
                                                         <option value="pausado" {{ $arquivo->agendamentos->Status == 'pausado' ? 'selected' : '' }}>Pausado</option>
                                                         <option value="ativo" {{ $arquivo->agendamentos->Status == 'ativo' ? 'selected' : '' }}>Ativo</option>
                                                     </select>
-                                                </form>      
+                                            
+                                                    <label for="DataHoraInicio" class="block text-sm ">Início:</label>
+                                                    <input type="datetime-local" name="DataHoraInicio" id="DataHoraInicio" class="form-input rounded-md" value="{{ \Carbon\Carbon::parse($arquivo->agendamentos->DataHoraInicio)->format('Y-m-d\TH:i') ?? '' }}" onchange="atualizarFormulario()">
+                                            
+                                                    <label for="DataHoraFim" class="block text-sm ">Fim:</label>
+                                                    <input type="datetime-local" name="DataHoraFim" id="DataHoraFim" class="form-input rounded-md" value="{{ \Carbon\Carbon::parse($arquivo->agendamentos->DataHoraFim)->format('Y-m-d\TH:i') ?? '' }}" onchange="atualizarFormulario()">
+                                                </form> 
                                             @endif
                                                
                                             <td title="Excluir Arquivo" >
@@ -107,6 +117,15 @@
                                             </div>
                                         </div>
                                     </div> 
+                                    @if ($errors->any())
+                                        <div class="bg-red-200 p-4 mb-4">
+                                            <ul>
+                                                @foreach ($errors->all() as $error)
+                                                    <li>{{ $error }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endif
                                 @endforeach
                             </div>
                             <script>
@@ -116,6 +135,11 @@
         
                                 function closeModal($arquivoId) {
                                     document.getElementById(`confirmDeleteModal_${$arquivoId}`).classList.add('hidden');
+                                }
+                            </script>
+                            <script>
+                                function atualizarFormulario() {
+                                    document.getElementById('updateForm').submit();
                                 }
                             </script>
                             @endif

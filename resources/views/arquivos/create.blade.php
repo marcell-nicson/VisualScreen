@@ -22,17 +22,13 @@
 
                         <div class="mb-4">
                             <label for="cliente_id" class="block text-sm font-semibold text-gray-600">Cliente:</label>
-                            <select name="cliente_id" id="cliente_id" class="border-gray-300 rounded-md p-2 w-full">
-                                <!-- Opções do select para clientes -->
-                                @foreach($clientes as $cliente)
-                                    <option value="{{ $cliente->id }}">{{ $cliente->nome }}</option>
-                                @endforeach
-                            </select>
+                            <input class=" border-gray-300 rounded-md p-2 w-full" value="{{ $cliente->nome ?? '' }}" disabled>
                         </div>
+                        
 
                         <div class="mb-4">
                             <label for="tipo" class="block text-sm font-semibold text-gray-600">Tipo de Arquivo:</label>
-                            <select name="tipo" id="tipo" class=" border-gray-300 rounded-md p-2 w-full">
+                            <select name="tipo" id="tipo" class="border-gray-300 rounded-md p-2 w-full">
                                 <option value="video">Video</option>
                                 <option value="foto">Foto</option>
                                 <option value="link">Link</option>

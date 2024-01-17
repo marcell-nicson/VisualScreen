@@ -25,11 +25,9 @@ class ArquivoController extends Controller
         
         if (!$cliente) {
             abort(404, 'Cliente não encontrado');
-        }
+        }        
 
-        $nome = $cliente->nome;
-
-        return view('arquivos.index', compact('arquivos', 'nome'));
+        return view('arquivos.index', compact('arquivos', 'cliente'));
     }
 
     /**
@@ -37,12 +35,18 @@ class ArquivoController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {   
-        $clientes = Cliente::all();
-        return view('arquivos.create', compact('clientes'));
-    }
+        
+        $clienteId = $request->input('cliente');       
+        $cliente = Cliente::find($clienteId);
+       
+        if (!$cliente) {
+            abort(404, 'Cliente não encontrado');
+        } 
 
+        return view('arquivos.create', compact('cliente'));
+    }
     /**
      * Store a newly created resource in storage.
      *
