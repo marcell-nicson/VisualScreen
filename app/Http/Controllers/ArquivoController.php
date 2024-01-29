@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Agendamento;
 use App\Models\Arquivo;
 use App\Models\Cliente;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -57,18 +58,19 @@ class ArquivoController extends Controller
     {
         try {
                  
-            $request->validate([
-                'cliente_id' => 'required|exists:clientes,id',
-                'tipo' => 'required|in:video,foto,link',
-                'caminho_do_arquivo' => ($request->tipo == 'link') ? 'required|url' : 'required|mimes:mp4,jpg,jpeg,png',                
-                'DataHoraInicio' => 'required|date_format:Y-m-d\TH:i',
-                'DataHoraFim' => 'required|date_format:Y-m-d\TH:i',
-                'Status' => 'required|in:ativo,inativo,pausado',
-            ]);
+            // $request->validate([
+            //     'cliente_id' => 'required|exists:clientes,id',
+            //     'tipo' => 'required|in:video,foto,link',
+            //     // 'caminho_do_arquivo' => ($request->tipo == 'link') ? 'required|url' : 'required|mimes:mp4,jpg,jpeg,png',                
+            //     'DataHoraInicio' => 'required|date_format:Y-m-d\TH:i',
+            //     'DataHoraFim' => 'required|date_format:Y-m-d\TH:i',
+            //     'Status' => 'required|in:ativo,inativo,pausado',
+            // ]);
            
             $arquivo = New Arquivo();
             
-            $arquivo->cliente_id = $request->input('cliente_id');
+            $arquivo->cliente_id = $request->input('cliente_id');      
+          
             $arquivo->tipo = $request->input('tipo');
 
             if ($request->tipo == 'foto' || $request->File('caminho_do_arquivo')) {
@@ -81,11 +83,7 @@ class ArquivoController extends Controller
             } elseif ($request->tipo == 'video' || $request->hasFile('caminho_do_arquivo')) {
 
                 $video = $request->file('caminho_do_arquivo');
-                
-                // Defina um nome único para o arquivo
                 $nomeArquivo = uniqid().'.'.$video->getClientOriginalExtension();
-        
-                // Mova o arquivo para o diretório desejado
                 $video->move(public_path('videos'), $nomeArquivo);        
              
                 $arquivo->caminho_do_arquivo = $nomeArquivo;
@@ -150,18 +148,20 @@ class ArquivoController extends Controller
     public function update(Request $request, $id)
     {   
         try {
-            
+        
             $arquivo = Arquivo::where('id', $id)->with('agendamentos')->first();
 
-            $originalinicio = $arquivo->agendamentos->DataHoraInicio;
-            $originalfim = $arquivo->agendamentos->DataHoraFim;        
+            $originalinicio = $arquivo->agendamentos->DataHoraInicio ? $arquivo->agendamentos->DataHoraInicio : null;
+            $originalfim = $arquivo->agendamentos->DataHoraFim ? $arquivo->agendamentos->DataHoraFim : null;   
             $datainicio = $request->DataHoraInicio ? $request->DataHoraInicio : $originalinicio;
             $datafim = $request->DataHoraFim ? $request->DataHoraFim : $originalfim;
 
-            if($originalinicio !== $datainicio or $originalfim !== $datafim){
+            // dd($arquivo,  'DataHoraInicio: '. $originalinicio, 'DataHoraFim: '. $originalfim, 'DataHoraInicio: '. $datainicio, 'DataHoraFim: '. $datafim );
 
-                $Inicio = \Carbon\Carbon::parse($datainicio);
-                $Fim = \Carbon\Carbon::parse($datafim);
+            if($originalinicio !== $datainicio || $originalfim !== $datafim){
+
+                $Inicio = Carbon::parse($datainicio);
+                $Fim = Carbon::parse($datafim);
         
                 if ($Fim <= $Inicio) {
                     return redirect()->back()->with('error', 'A data de fim deve ser maior que a data de início.');
@@ -175,35 +175,16 @@ class ArquivoController extends Controller
                 return redirect()->back();
             }
         
-            $statusOptions = ['inativo', 'pausado', 'ativo'];
+           
             
-            if (in_array($request->status, $statusOptions)) {
+            if ($request->status) {
 
                 Agendamento::where('arquivo_id', $arquivo->id)->update(['Status' => $request->status]);
 
                 return redirect()->back();
             }
 
-            if ($request->tipo == 'foto') {
-                    
-                $foto = $request->file('caminho_do_arquivo');
-                $nomeFoto = time() . '.' . $foto->getClientOriginalExtension();
-                $foto->move(public_path('fotos'), $nomeFoto);
-                $arquivo->caminho_do_arquivo = $nomeFoto;
-                $arquivo->save(); 
-            } elseif ($request->tipo == 'video') {
-                $caminhoDoArquivo = Storage::putFile('/public', $request->file('caminho_do_arquivo'));
-
-                $arquivo->caminho_do_arquivo = $caminhoDoArquivo;
-                $arquivo->save();            
-            } else {
-
-                $videoUrl = $request->input('caminho_do_arquivo');
-                preg_match('/(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/', $videoUrl, $matches);
-                $videoId = isset($matches[1]) ? $matches[1] : null;
-                $arquivo->caminho_do_arquivo = $videoId;
-                $arquivo->save();
-            }
+           
 
         } catch (\Exception $e) {            
             info($e);            

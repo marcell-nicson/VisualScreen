@@ -12,20 +12,20 @@
                             {{ session('error') }}
                         </div>
                     @endif
-
+                    <strong class=""> {{ $cliente->nome ?? '' }}</strong>
                     <div class="flex items-center justify-center mt-2">
                         <a href="{{ route('arquivos.create', ['cliente' => $cliente->id]) }}" class="bg-blue-500 hover:bg-blue-500 text-blue-700 hover:text-white font-bold py-2 px-4 rounded">
                             Adicionar Arquivos
                         </a>
+                        
                     </div>                 
                     @isset($arquivos)
                         @if($arquivos->isEmpty())                        
                             <div class="flex items-center mt-2">
-                                <p class="mr-2">Não existe nenhum arquivo para esse Cliente: </p>
-                                <strong class="mr-2"> {{ $cliente->nome ?? '' }}</strong>                                
+                                <p class="mr-2">Esse cliente ainda não tem arquivos!</p>                             
                             </div>                        
                         
-                        @else
+                        @else                               
                             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
                                 @foreach($arquivos as $arquivo)
                                     <div class="bg-gray-100 p-4 rounded-md">
@@ -51,26 +51,26 @@
                                             {{-- <p><strong>Início:</strong> {{ \Carbon\Carbon::parse($arquivo->agendamentos->DataHoraInicio)->format('d/m/Y H:i:s') ?? '' }}</p>
                                             <p><strong>Fim:</strong> {{ \Carbon\Carbon::parse($arquivo->agendamentos->DataHoraFim)->format('d/m/Y H:i:s') ?? '' }}</p> --}}
                                           
-                                            @if(isset($arquivo->agendamentos->Status))
-                                                <form method="POST" action="{{ route('arquivos.update', ['arquivo' => $arquivo->id]) }}" id="updateForm">
-                                                    @csrf
-                                                    @method('PUT')
-                                                    
-                                                    <strong>Status:</strong>  
-                                                    <select name="status" id="status" onchange="this.form.submit()">                                                
-                                                        <option value="Selecione" >{{ $arquivo->agendamentos->Status ?? ''}}</option>
-                                                        <option value="inativo" {{ $arquivo->agendamentos->Status == 'inativo' ? 'selected' : '' }}>Inativo</option>
-                                                        <option value="pausado" {{ $arquivo->agendamentos->Status == 'pausado' ? 'selected' : '' }}>Pausado</option>
-                                                        <option value="ativo" {{ $arquivo->agendamentos->Status == 'ativo' ? 'selected' : '' }}>Ativo</option>
-                                                    </select>
                                             
-                                                    <label for="DataHoraInicio" class="block text-sm ">Início:</label>
-                                                    <input type="datetime-local" name="DataHoraInicio" id="DataHoraInicio" class="form-input rounded-md" value="{{ \Carbon\Carbon::parse($arquivo->agendamentos->DataHoraInicio)->format('Y-m-d\TH:i') ?? '' }}" onchange="atualizarFormulario()">
+                                            <form method="POST" action="{{ route('arquivos.update', ['arquivo' => $arquivo->id]) }}" id="updateForm">
+                                                @csrf
+                                                @method('PUT')
+                                                
+                                                <strong>Status:</strong>  
+                                                <select name="status" id="status" onchange="this.form.submit()">                                                
+                                                    <option  >{{ $arquivo->agendamentos->Status ?? ''}}</option>
+                                                    <option value="inativo" {{ $arquivo->agendamentos->Status == 'inativo' ? 'selected' : '' }}>Inativo</option>
+                                                    <option value="pausado" {{ $arquivo->agendamentos->Status == 'pausado' ? 'selected' : '' }}>Pausado</option>
+                                                    <option value="ativo" {{ $arquivo->agendamentos->Status == 'ativo' ? 'selected' : '' }}>Ativo</option>
+                                                </select>
+                                        
+                                                <label for="DataHoraInicio" class="block text-sm ">Início:</label>                                               
+                                                <input type="datetime-local" name="DataHoraInicio" id="DataHoraInicio" class="form-input rounded-md" value="{{ $arquivo->agendamentos->DataHoraInicio ?? '' }}" onchange="this.form.submit()" >
+                                        
+                                                <label for="DataHoraFim" class="block text-sm ">Fim:</label>
+                                                <input type="datetime-local" name="DataHoraFim" id="DataHoraFim" class="form-input rounded-md" value="{{ $arquivo->agendamentos->DataHoraFim ?? '' }}" onchange="this.form.submit()">
+                                            </form> 
                                             
-                                                    <label for="DataHoraFim" class="block text-sm ">Fim:</label>
-                                                    <input type="datetime-local" name="DataHoraFim" id="DataHoraFim" class="form-input rounded-md" value="{{ \Carbon\Carbon::parse($arquivo->agendamentos->DataHoraFim)->format('Y-m-d\TH:i') ?? '' }}" onchange="atualizarFormulario()">
-                                                </form> 
-                                            @endif
                                                
                                             <td title="Excluir Arquivo" >
                                                 <a href="#" onclick="confirmDelete({{ $arquivo->id }})">
