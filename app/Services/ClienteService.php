@@ -52,15 +52,11 @@ class ClienteService
         }
     }
 
-    public function delete($cliente)
+    public function delete($cliente) : ? bool
     {
         try {
-            $cliente = $this->clienteRepository->delete($cliente);
-            if (!$cliente) {
-               return true;
-            }
-
-            return false;
+            
+           return $cliente = $this->clienteRepository->delete($cliente);
 
         } catch (Exception $e) {
             throw $e;

@@ -31,7 +31,7 @@ class ClienteRepository
 
     public function delete(Cliente $cliente)
     {
-        $cliente->delete();     
+        return $cliente->delete();
     }
 
 }

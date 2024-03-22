@@ -88,8 +88,8 @@ class ClienteController extends Controller
     {
         try {
 
-            $this->clienteService->delete($cliente);   
-
+            $this->clienteService->delete($cliente);
+            
         } catch (Exception $e) {
             info($e);
             return redirect()->back()->with('error', 'Ocorreu um erro ao Ecluir o Cliente, tente novamente.');

@@ -2,15 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ArquivoRequest;
 use App\Models\Agendamento;
 use App\Models\Arquivo;
 use App\Models\Cliente;
+use App\Services\ArquivoService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class ArquivoController extends Controller
 {
+    protected $arquivoService;
+
+    public function __construct(ArquivoService $arquivoService)
+    {
+        $this->arquivoService = $arquivoService;
+    }
     /**
      * Display a listing of the resource.
      *
@@ -54,57 +62,12 @@ class ArquivoController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(ArquivoRequest $request)
     {
         try {
                  
-            // $request->validate([
-            //     'cliente_id' => 'required|exists:clientes,id',
-            //     'tipo' => 'required|in:video,foto,link',
-            //     // 'caminho_do_arquivo' => ($request->tipo == 'link') ? 'required|url' : 'required|mimes:mp4,jpg,jpeg,png',                
-            //     'DataHoraInicio' => 'required|date_format:Y-m-d\TH:i',
-            //     'DataHoraFim' => 'required|date_format:Y-m-d\TH:i',
-            //     'Status' => 'required|in:ativo,inativo,pausado',
-            // ]);
-           
-            $arquivo = New Arquivo();
-            
-            $arquivo->cliente_id = $request->input('cliente_id');      
-          
-            $arquivo->tipo = $request->input('tipo');
+           $this->arquivoService->store($request->all());
 
-            if ($request->tipo == 'foto' || $request->File('caminho_do_arquivo')) {
-                
-                $foto = $request->file('caminho_do_arquivo');
-                $nomeFoto = time() . '.' . $foto->getClientOriginalExtension();
-                $foto->move(public_path('fotos'), $nomeFoto);
-                $arquivo->caminho_do_arquivo = $nomeFoto;
-                $arquivo->save(); 
-            } elseif ($request->tipo == 'video' || $request->hasFile('caminho_do_arquivo')) {
-
-                $video = $request->file('caminho_do_arquivo');
-                $nomeArquivo = uniqid().'.'.$video->getClientOriginalExtension();
-                $video->move(public_path('videos'), $nomeArquivo);        
-             
-                $arquivo->caminho_do_arquivo = $nomeArquivo;
-                $arquivo->save(); 
-        
-            } else {
-
-                $videoUrl = $request->input('caminho_do_arquivo');
-                preg_match('/(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/', $videoUrl, $matches);
-                $videoId = isset($matches[1]) ? $matches[1] : null;
-                $arquivo->caminho_do_arquivo = $videoId;
-                $arquivo->save();
-            }
-
-            Agendamento::create([
-                'arquivo_id' => $arquivo->id,
-                'Status' => $request->input('Status'),
-                'DataHoraInicio' => $request->input('DataHoraInicio'),
-                'DataHoraFim' => $request->input('DataHoraFim'),
-            ]);
-            $idCliente = $arquivo->cliente_id;
             
             return redirect()->route('arquivos.index', ['id' => $idCliente])->with('success', 'Arquivo cadastrado com sucesso!');
            
