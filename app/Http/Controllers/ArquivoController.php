@@ -117,24 +117,11 @@ class ArquivoController extends Controller
     public function update(Request $request, $id)
     {   
         try {
-            dd($request->all());
-            $response = $this->arquivoService->update($request->all(), $id);
+            $this->arquivoService->update($request->all(), $id);
 
-           if($response == false){
-            return redirect()->back()->with('error', 'A data de fim deve ser maior que a data de início.');
-
-           }
-           if($response == true){
             return redirect()->back();
-
-           }
-            
-           
-
-        } catch (\Exception $e) {            
-            info($e);            
-            dd($e , $request->all());                 
-            return redirect()->back()->with('error', 'Ocorreu um erro ao atualiazar o arquivo. Por favor, tente novamente.');
+        } catch (\Exception $e) {                          
+            return redirect()->back()->with('error', $e->getMessage());
         }
 
     }
