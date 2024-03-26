@@ -72,13 +72,11 @@ class ArquivoController extends Controller
     {
         try {
 
-
             $arquivo = $this->arquivoService->store($request->all());
             
             return redirect()->route('arquivos.index', ['id' => $arquivo->cliente_id])->with('success', 'Arquivo cadastrado com sucesso!');
            
-        } catch (\Exception $e) {            
-                    
+        } catch (\Exception $e) {
             dd($e , $request->all());                 
             return redirect()->back()->with('error', 'Ocorreu um erro ao cadastrar o arquivo. Por favor, tente novamente.');
         }
@@ -117,6 +115,7 @@ class ArquivoController extends Controller
     public function update(Request $request, $id)
     {   
         try {
+            
             $this->arquivoService->update($request->all(), $id);
 
             return redirect()->back();

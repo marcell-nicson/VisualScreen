@@ -57,15 +57,17 @@ class ArquivoService
     {
 
         try {
-            $arquivo = $this->arquivoRepository->find($id);        
 
-            $originalinicio = $arquivo->agendamentos->DataHoraInicio ? $arquivo->agendamentos->DataHoraInicio : null;
-            $originalfim = $arquivo->agendamentos->DataHoraFim ? $arquivo->agendamentos->DataHoraFim : null;   
-            $datainicio = $request['DataHoraInicio'] ? $request['DataHoraInicio'] : $originalinicio;
-            $datafim = $request['DataHoraFim'] ? $request['DataHoraFim'] : $originalfim;
+            
+            $arquivo = $this->arquivoRepository->find($id);    
+
+            $datainicio = $request['DataHoraInicio'] ? $request['DataHoraInicio'] : $arquivo->agendamentos->DataHoraInicio;
+            $datafim = $request['DataHoraFim'] ? $request['DataHoraFim'] : $arquivo->agendamentos->DataHoraFim;
 
 
-            if($originalinicio !== $datainicio || $originalfim !== $datafim){
+            if($arquivo->agendamentos->DataHoraInicio !== $datainicio || $arquivo->agendamentos->DataHoraFim !== $datafim){
+
+                dd('original' . $arquivo->agendamentos->DataHoraInicio . 'nova'. $datainicio ,'original' . $arquivo->agendamentos->DataHoraFim .'nova'. $datafim);
 
                 $Inicio = Carbon::parse($datainicio);
                 $Fim = Carbon::parse($datafim);
@@ -84,12 +86,16 @@ class ArquivoService
                 
                 return true;             
 
-            }    
-        
-            if ($request->status) {         
+            }  
 
-                $response = $this->agendamentoRepository->update($id , [
-                    'Status' => $request->status,
+            if ( $request['status']) {
+
+                // $response = $this->agendamentoRepository->update($id , [
+                //     'Status' => $request['status'],
+                // ]);
+                $response = $arquivo->agendamentos->update([
+                    'Status' =>  $request['status'], 
+                
                 ]);
 
                 if(!$response){
