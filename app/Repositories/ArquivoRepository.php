@@ -26,7 +26,25 @@ class ArquivoRepository
 
     public function find($id)
     {
+        return Arquivo::where(
+            'id', $id)->with(
+            'agendamentos')
+            ->first();
+        
+    }
+
+    public function index($id)
+    {
         return Arquivo::findOrFail($id);
+    }
+
+    public function all($id)
+    {
+        return Arquivo::where(
+            'cliente_id', $id)
+            ->with('agendamentos')
+            ->get();
+
     }
 
 }

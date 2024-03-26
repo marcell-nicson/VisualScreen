@@ -17,9 +17,9 @@
                         </div>
                     @endif
                     
-                    <form action="{{ route('arquivos.store') }}" method="POST" enctype="multipart/form-data" id="arquivoForm">
+                    <form action="{{ route('arquivos.store', ['cliente' => $cliente->id]) }}" method="POST" enctype="multipart/form-data" id="arquivoForm">
                         @csrf
-
+                       
                         <div class="mb-4">
                             <label for="cliente_id" class="block text-sm font-semibold text-gray-600">Cliente:</label>
                             <input class=" border-gray-300 rounded-md p-2 w-full" value="{{ $cliente->nome ?? '' }}" disabled>

@@ -14,7 +14,6 @@ class ArquivoRequest extends FormRequest
     public function rules()
     {
         return [
-            'cliente_id' => 'required|exists:clientes,id',
             'tipo' => 'required|in:video,foto,link',
             'caminho_do_arquivo' => ($this->tipo == 'link') ? 'required|url' : 'required|mimes:mp4,jpg,jpeg,png',                
             'DataHoraInicio' => 'required|date_format:Y-m-d\TH:i',
@@ -26,8 +25,6 @@ class ArquivoRequest extends FormRequest
     public function messages()
     {
         return [
-            'cliente_id.required' => 'O campo cliente é obrigatório.',
-            'cliente_id.exists' => 'O cliente especificado não existe.',
             'tipo.required' => 'O campo tipo é obrigatório.',
             'tipo.in' => 'O campo tipo deve ser video, foto ou link.',
             'caminho_do_arquivo.required' => 'O campo caminho do arquivo é obrigatório.',

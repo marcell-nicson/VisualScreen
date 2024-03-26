@@ -57,7 +57,7 @@ class ClienteController extends Controller
             return view('clientes.show', compact('cliente'));
 
         } catch (Exception $e) {
-            info($e);
+            info($e); 
             return redirect()->back()->with('error', 'Ocorreu um erro ao Visualizar o Cliente, tente novamente.');
         }
 
@@ -96,5 +96,7 @@ class ClienteController extends Controller
         }
 
     }
+
+
 
 }

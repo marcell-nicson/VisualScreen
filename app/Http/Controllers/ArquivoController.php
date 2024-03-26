@@ -7,6 +7,7 @@ use App\Models\Agendamento;
 use App\Models\Arquivo;
 use App\Models\Cliente;
 use App\Services\ArquivoService;
+use App\Services\ClienteService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -14,10 +15,14 @@ use Illuminate\Support\Facades\Storage;
 class ArquivoController extends Controller
 {
     protected $arquivoService;
+    
+    protected $clienteService;
 
-    public function __construct(ArquivoService $arquivoService)
+    public function __construct(ArquivoService $arquivoService, ClienteService $clienteService)
     {
         $this->arquivoService = $arquivoService;
+        $this->clienteService = $clienteService;
+
     }
     /**
      * Display a listing of the resource.
@@ -26,11 +31,12 @@ class ArquivoController extends Controller
      */
     public function index(Request $request)
     {  
-        $id = $request->input('id');
+        $clienteId = $request->input('id');
+        $arquivoId = $request->query('id');
 
-        $arquivos = Arquivo::where('cliente_id', $request->query('id'))->with('agendamentos')->get();
-        $cliente = Cliente::find($id);
-        
+        $arquivos = $this->arquivoService->all($arquivoId);
+
+        $cliente = $this->clienteService->get($clienteId);
         
         if (!$cliente) {
             abort(404, 'Cliente não encontrado');
@@ -47,7 +53,7 @@ class ArquivoController extends Controller
     public function create(Request $request)
     {   
         
-        $clienteId = $request->input('cliente');       
+        $clienteId = $request->input('cliente');
         $cliente = Cliente::find($clienteId);
        
         if (!$cliente) {
@@ -65,14 +71,14 @@ class ArquivoController extends Controller
     public function store(ArquivoRequest $request)
     {
         try {
-                 
-           $this->arquivoService->store($request->all());
 
+
+            $arquivo = $this->arquivoService->store($request->all());
             
-            return redirect()->route('arquivos.index', ['id' => $idCliente])->with('success', 'Arquivo cadastrado com sucesso!');
+            return redirect()->route('arquivos.index', ['id' => $arquivo->cliente_id])->with('success', 'Arquivo cadastrado com sucesso!');
            
         } catch (\Exception $e) {            
-            info($e);            
+                    
             dd($e , $request->all());                 
             return redirect()->back()->with('error', 'Ocorreu um erro ao cadastrar o arquivo. Por favor, tente novamente.');
         }
@@ -111,42 +117,18 @@ class ArquivoController extends Controller
     public function update(Request $request, $id)
     {   
         try {
-        
-            $arquivo = Arquivo::where('id', $id)->with('agendamentos')->first();
+            dd($request->all());
+            $response = $this->arquivoService->update($request->all(), $id);
 
-            $originalinicio = $arquivo->agendamentos->DataHoraInicio ? $arquivo->agendamentos->DataHoraInicio : null;
-            $originalfim = $arquivo->agendamentos->DataHoraFim ? $arquivo->agendamentos->DataHoraFim : null;   
-            $datainicio = $request->DataHoraInicio ? $request->DataHoraInicio : $originalinicio;
-            $datafim = $request->DataHoraFim ? $request->DataHoraFim : $originalfim;
+           if($response == false){
+            return redirect()->back()->with('error', 'A data de fim deve ser maior que a data de início.');
 
-            // dd($arquivo,  'DataHoraInicio: '. $originalinicio, 'DataHoraFim: '. $originalfim, 'DataHoraInicio: '. $datainicio, 'DataHoraFim: '. $datafim );
+           }
+           if($response == true){
+            return redirect()->back();
 
-            if($originalinicio !== $datainicio || $originalfim !== $datafim){
-
-                $Inicio = Carbon::parse($datainicio);
-                $Fim = Carbon::parse($datafim);
-        
-                if ($Fim <= $Inicio) {
-                    return redirect()->back()->with('error', 'A data de fim deve ser maior que a data de início.');
-                }
-
-                $arquivo->agendamentos->update([
-                    'DataHoraInicio' => $datainicio,
-                    'DataHoraFim' => $datafim,                                  
-                ]);
-
-                return redirect()->back();
-            }
-        
-           
+           }
             
-            if ($request->status) {
-
-                Agendamento::where('arquivo_id', $arquivo->id)->update(['Status' => $request->status]);
-
-                return redirect()->back();
-            }
-
            
 
         } catch (\Exception $e) {            
