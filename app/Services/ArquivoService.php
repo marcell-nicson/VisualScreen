@@ -45,7 +45,7 @@ class ArquivoService
                 'Status' => $data['Status'],
                 'DataHoraInicio' => $data['DataHoraInicio'],
                 'DataHoraFim' => $data['DataHoraFim'],
-            ]);            
+            ]);
            
             return $arquivo;
         } catch (Exception $e) {            
@@ -57,54 +57,40 @@ class ArquivoService
     {
 
         try {
-
             
-            $arquivo = $this->arquivoRepository->find($id);    
+            $arquivo = $this->arquivoRepository->find($id);   
+            $datarequesinicio = Carbon::createFromFormat('Y-m-d\TH:i', $request['DataHoraInicio']); 
+            $datarequestfim = Carbon::createFromFormat('Y-m-d\TH:i', $request['DataHoraFim']); 
 
-            $datainicio = $request['DataHoraInicio'] ? $request['DataHoraInicio'] : $arquivo->agendamentos->DataHoraInicio;
-            $datafim = $request['DataHoraFim'] ? $request['DataHoraFim'] : $arquivo->agendamentos->DataHoraFim;
+            $datainicio = $request['DataHoraInicio'] ? $datarequesinicio->format('Y-m-d H:i:s') : $arquivo->agendamentos->DataHoraInicio;
+            $datafim = $request['DataHoraFim'] ? $datarequestfim->format('Y-m-d H:i:s') : $arquivo->agendamentos->DataHoraFim;
 
+            $data = [];
 
-            if($arquivo->agendamentos->DataHoraInicio !== $datainicio || $arquivo->agendamentos->DataHoraFim !== $datafim){
-
-                dd('original' . $arquivo->agendamentos->DataHoraInicio . 'nova'. $datainicio ,'original' . $arquivo->agendamentos->DataHoraFim .'nova'. $datafim);
-
+            if($arquivo->agendamentos->DataHoraInicio != $datainicio || $arquivo->agendamentos->DataHoraFim != $datafim){
                 $Inicio = Carbon::parse($datainicio);
                 $Fim = Carbon::parse($datafim);
         
                 if ($Fim <= $Inicio) {                
                     throw new Exception('A data de fim deve ser maior que a data de início.');                
                 }
-                $response = $arquivo->agendamentos->update([
+                $data = [
                     'DataHoraInicio' => $datainicio,
                     'DataHoraFim' => $datafim,
+                ]; 
                 
-                ]);
-                if (!$response) {                
-                    throw new Exception('Não foi possivel atualizar a data do arquivo');                
-                }
-                
-                return true;             
-
             }  
-
-            if ( $request['status']) {
-
-                // $response = $this->agendamentoRepository->update($id , [
-                //     'Status' => $request['status'],
-                // ]);
-                $response = $arquivo->agendamentos->update([
-                    'Status' =>  $request['status'], 
+            
+            if ($request['status'] != $arquivo->agendamentos->Status) {
+                $data = ['Status' =>  $request['status']];
                 
-                ]);
-
-                if(!$response){
-                    throw new Exception('Ocorreu um erro ao atualiazar o arquivo. Por favor, tente novamente.');                
-                    
-                }
-                return true;               
-
             }
+
+            if(!$data){
+                throw new Exception('Ocorreu um erro ao atualizar o arquivo. Por favor, tente novamente.');          
+            }
+            $arquivo->agendamentos->update($data);
+
 
         } catch (Exception $e) {
             throw $e;
